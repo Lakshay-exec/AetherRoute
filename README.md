@@ -60,7 +60,7 @@ To mitigate this:
 
 AetherRoute is open-source. If this helped you bypass network blocks and stabilize your ping:
 
-👉 **[Support the Creator via UPI / Cards](https://playto.so/@acebymistake)**
+👉 **[Support the Creator via instgram www.instagram.com\@acebymistake**
 
 ---
 
