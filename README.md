@@ -3,6 +3,9 @@
 > **Universal Dual-Interface Split-Tunnel Engine for Campus & Workplace Networks.**  
 > Play Valorant, CS2, and competitive titles with low match ping (~30ms) and functional voice chat on restricted captive-portal Wi-Fi without VPN bans.
 
+# ⚡ AetherRoute
+
+[![Download Latest Release](https://img.shields.io/github/v/release/Lakshay-exec/AetherRoute?color=blue&label=Download%20Executable)](https://github.com/Lakshay-exec/AetherRoute/releases/latest)
 ---
 
 ## 💡 The Problem & How AetherRoute Fixes It
