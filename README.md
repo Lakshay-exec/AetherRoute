@@ -1,70 +1,41 @@
-# ⚡ AetherRoute
+# ⚡ AetherRoute v4.0
 
-> **Universal Dual-Interface Split-Tunnel Engine for Campus & Workplace Networks.**  
-> Play Valorant, CS2, and competitive titles with low match ping (~30ms) and functional voice chat on restricted captive-portal Wi-Fi without VPN bans.
+[!\[Download Latest Release](https://img.shields.io/github/v/release/Lakshay-exec/AetherRoute?color=blue\&label=Download%20Executable)](https://github.com/Lakshay-exec/AetherRoute/releases/latest)
 
-[![Download Latest Release](https://img.shields.io/github/v/release/Lakshay-exec/AetherRoute?color=blue&label=Download%20Executable)](https://github.com/Lakshay-exec/AetherRoute/releases/latest)
----
+AetherRoute is a dual-interface split-tunneling utility designed to optimize UDP packet latency and bypass strict captive-portal firewalls (Fortinet, Sophos, Cyberoam).
 
-## 💡 The Problem & How AetherRoute Fixes It
+By inverting Windows TCP/IP adapter metrics, AetherRoute pushes lightweight authentication and VoIP traffic over a mobile USB tether while binding heavy match-server UDP packets directly to the local Wi-Fi backbone.
 
-Campus firewalls (such as Fortinet, Sophos, Cyberoam, and Palo Alto) block incoming and outgoing ports for:
-1. **Authentication & Handshakes:** Preventing logins to Riot Client, Steam, and Epic Games.
-2. **In-Game Voice Signaling (SIP/Vivox):** Cutting off team voice chat.
+⭐ **If this utility fixes your match ping or unblocks voice chat, please leave a Star on this repository!**
 
-Standard VPNs add 80–120ms of routing latency, introduce jitter, and often trigger automatic firewall account suspensions.
+## 🚀 V4.0 Zero-Jitter Engine Update
 
-### The Metric Inversion Solution
-AetherRoute manages your computer's built-in Windows network metrics across two simultaneous connections:
-* **Mobile Tether (USB):** Elevated to `Metric 5` (Priority Default Gateway). Voice chat, web authentication, and DNS flow over your mobile data (consuming only ~20MB/hour).
-* **Hostel Wi-Fi:** Set to `Metric 50`, with match server IP blocks bound directly to the local Wi-Fi gateway at `RouteMetric 1`. High-tick live match packets go straight through the campus backbone for low ping.
+Standard wireless gaming suffers from latency spikes because Windows periodically scans for new nearby Wi-Fi networks in the background. AetherRoute V4 introduces the **Zero-Jitter Engine**:
 
----
+* **WLAN AutoConfig Suspension:** Automatically disables background Wi-Fi scanning (`netsh wlan set autoconfig`) the moment routing activates, completely eliminating 100ms+ roaming spikes.
+* **Latched UDP Sniffer:** The background UI stops polling the network stack the exact second your match server is found, reducing CPU overhead to absolute zero during gameplay.
+* **Clean UI:** Rebuilt with a lightweight, dark-mode WPF Glassmorphism interface.
 
-## 🛡️ Anti-Cheat & Network Safety
+## 🛡️ Anti-Cheat \& Network Safety
 
-* **Zero Memory Hooks:** AetherRoute does not inject into game processes, modify game files, or install third-party virtual network drivers.
-* **Kernel Anti-Cheat Safe:** Fully compliant with **Riot Vanguard**, **Valve Anti-Cheat (VAC)**, and **Easy Anti-Cheat (EAC)** because it uses native Windows TCP/IP routing APIs (`NetTCPIP`).
-* **Firewall Safe:** No exploit payloads or captive portal hacks. Your PC simply acts as a standard dual-homed client routing traffic across two networks you legitimately access.
+* **Zero Memory Hooks:** AetherRoute operates strictly via native Windows TCP/IP routing APIs (`NetTCPIP` cmdlets). It does not inject into game processes or create virtual TAP adapters.
+* **Fully Compliant:** 100% safe for Riot Vanguard, Valve Anti-Cheat (VAC), BattlEye, and Easy Anti-Cheat (EAC).
 
----
+## ⚙️ Usage (GUI Version)
 
-## 🚀 Getting Started
+1. Download `AetherRoute.exe` from the [**Releases**](https://github.com/Lakshay-exec/AetherRoute/releases/latest) tab.
+2. Connect to your primary Wi-Fi and plug in your phone via USB Tethering.
+3. Right-click the `.exe` and select **Run as Administrator**.
+4. Click **Activate Routing** and launch your game.
+5. When finished, click **Exit \& Restore Network** to revert all metrics to default.
 
-### Prerequisites
-* Windows 10 or Windows 11.
-* A USB cable to tether your smartphone.
+*(Note: If Windows SmartScreen displays a warning, click **More Info -> Run Anyway**. The app is entirely open-source, and you can inspect the raw `.ps1` code in this repository.)*
 
-### Setup Instructions
-1. Connect your PC to your campus/hostel Wi-Fi and complete the browser portal login.
-2. Connect your phone to your PC via USB and enable tethering:
-   * **Android:** *Settings $\rightarrow$ Network & Internet $\rightarrow$ Hotspot & Tethering $\rightarrow$ USB Tethering*.
-   * **iPhone:** *Settings $\rightarrow$ Personal Hotspot $\rightarrow$ Allow Others to Join (Select "USB Only")*.
-3. Download the latest release from the Releases tab.
-4. Right-click **`run.bat`** and select **Run as Administrator**.
-5. Once both status indicators turn green, click **ACTIVATE BYPASS**.
-6. Launch your game.
+## 💻 CLI Barebones Version
 
----
+For users who prefer manual terminal execution with zero UI overhead, check the `CLI\_Barebones\_Version` folder for the raw batch scripts.
 
-## ⚡ Peak-Hour / Holiday Congestion Guide
+\---
 
-When everyone in the hostel is streaming simultaneously, 2.4 GHz channels suffer from airtime collisions, spiking ping from 30ms to 70ms+. 
+**Educational Disclaimer:** *AetherRoute is an open-source networking proof-of-concept demonstrating dynamic split-tunneling. Users are solely responsible for ensuring their traffic complies with local network Acceptable Use Policies.*
 
-To mitigate this:
-1. Click the **`⚡ Congestion Fix (Holiday Mode)`** button inside AetherRoute. This locks roaming aggressiveness to minimum and disables Windows network throttling.
-2. In Windows **Device Manager** $\rightarrow$ **Network adapters** $\rightarrow$ right-click your Wi-Fi card $\rightarrow$ **Properties** $\rightarrow$ **Advanced** $\rightarrow$ set **Preferred Band** to **5GHz**.
-
----
-
-## ☕ Support the Project
-
-AetherRoute is open-source. If this helped you bypass network blocks and stabilize your ping:
-
-👉 **[Support the Creator via instgram https://www.instagram.com/acebymistake/**
-
----
-
-## 📄 License
-
-Distributed under the **MIT License**. Created for educational research, latency optimization, and client-side traffic management.

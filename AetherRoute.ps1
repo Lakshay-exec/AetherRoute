@@ -1,263 +1,318 @@
-Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
+<#
+.SYNOPSIS
+    AetherRoute V4 - Zero-Jitter Engine (Tray Fix & 8-Bit UI)
+#>
 
-if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    [System.Windows.MessageBox]::Show("Please run as Administrator!", "Elevation Error", 0, 16)
-    exit
-}
+$ErrorActionPreference = "SilentlyContinue";
+
+Add-Type -AssemblyName PresentationFramework;
+Add-Type -AssemblyName System.Windows.Forms;
+Add-Type -AssemblyName System.Drawing;
 
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="AetherRoute" Height="460" Width="380"
-        WindowStartupLocation="CenterScreen" WindowStyle="None" AllowsTransparency="True"
-        Background="Transparent" ResizeMode="NoResize">
+        Title="AetherRoute V4" Height="560" Width="420" 
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" 
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
     
     <Window.Resources>
-        <Style x:Key="CleanButton" TargetType="Button">
+        <!-- Glass Button Style -->
+        <Style TargetType="Button" x:Key="GlassButton">
+            <Setter Property="Background" Value="#1AFFFFFF"/>
+            <Setter Property="Foreground" Value="#00F2FE"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="#33FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="8" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Opacity" Value="0.75"/>
+                                <Setter Property="Background" Value="#33FFFFFF"/>
+                                <Setter Property="Cursor" Value="Hand"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Title Bar Button Style -->
+        <Style TargetType="Button" x:Key="TitleBarButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="5,0,5,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#33FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Lightweight 8-Bit Dance Animation -->
+        <Storyboard x:Key="DanceAnim">
+            <DoubleAnimation Storyboard.TargetName="DancerTranslate" Storyboard.TargetProperty="Y" From="0" To="-15" Duration="0:0:0.35" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="DancerRotate" Storyboard.TargetProperty="Angle" From="-15" To="15" Duration="0:0:0.7" AutoReverse="True" RepeatBehavior="Forever" />
+        </Storyboard>
     </Window.Resources>
 
-    <Border Background="#E60A0C10" CornerRadius="16" BorderBrush="#2A2F3D" BorderThickness="1.5">
-        <Border.Effect>
-            <DropShadowEffect Color="#000000" BlurRadius="30" ShadowDepth="10" Opacity="0.8"/>
-        </Border.Effect>
-        
-        <Grid Margin="20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="35"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="30"/>
-            </Grid.RowDefinitions>
+    <!-- Trigger Dance on Load -->
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Window.Loaded">
+            <BeginStoryboard Storyboard="{StaticResource DanceAnim}"/>
+        </EventTrigger>
+    </Window.Triggers>
 
-            <Grid Grid.Row="0" Name="HeaderBar" Background="Transparent">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="&#x26A1;" FontFamily="Segoe UI Emoji" FontSize="16" Foreground="#38BDF8" Margin="0,0,6,0"/>
-                    <TextBlock Text="AetherRoute" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF" FontFamily="Segoe UI"/>
-                    <TextBlock Text=" V3.0" FontSize="11" Foreground="#64748B" VerticalAlignment="Bottom" Margin="4,0,0,2"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Name="BtnMin" Content="&#x2014;" FontFamily="Segoe UI" Width="28" Height="28" Margin="0,0,4,0"
-                            Foreground="#94A3B8" Background="#1E293B" BorderThickness="0" Cursor="Hand" FontWeight="Bold" Style="{StaticResource CleanButton}">
-                        <Button.Resources><Style TargetType="Border"><Setter Property="CornerRadius" Value="14"/></Style></Button.Resources>
-                    </Button>
-                    <Button Name="BtnClose" Content="&#x2715;" FontFamily="Segoe UI Symbol" Width="28" Height="28"
-                            Foreground="#94A3B8" Background="#1E293B" BorderThickness="0" Cursor="Hand" FontWeight="Bold" Style="{StaticResource CleanButton}">
-                        <Button.Resources><Style TargetType="Border"><Setter Property="CornerRadius" Value="14"/></Style></Button.Resources>
-                    </Button>
-                </StackPanel>
-            </Grid>
+    <Border CornerRadius="12" Background="#0A0D14" BorderBrush="#1F2937" BorderThickness="1" ClipToBounds="True">
+        <Grid>
+            <!-- 8-Bit Dancing Character -->
+            <TextBlock x:Name="Dancer" Text="👾" FontFamily="Segoe UI Emoji" FontSize="38" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,25,25" RenderTransformOrigin="0.5,0.5">
+                <TextBlock.RenderTransform>
+                    <TransformGroup>
+                        <TranslateTransform x:Name="DancerTranslate" />
+                        <RotateTransform x:Name="DancerRotate" />
+                    </TransformGroup>
+                </TextBlock.RenderTransform>
+            </TextBlock>
 
-            <Border Grid.Row="1" Background="#99161B22" CornerRadius="10" Padding="14" Margin="0,10,0,12" BorderBrush="#262D3D" BorderThickness="1">
-                <StackPanel>
-                    <Grid Margin="0,0,0,8">
-                        <TextBlock Text="CONNECTION ADAPTERS" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
-                        <TextBlock Name="TxtPing" Text="Ping: -- ms" FontSize="10" FontWeight="Bold" Foreground="#38BDF8" HorizontalAlignment="Right"/>
-                    </Grid>
-                    
-                    <Grid Margin="0,0,0,6">
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse Name="DotTether" Width="8" Height="8" Fill="#EF4444" Margin="0,0,8,0"/>
-                            <TextBlock Name="TxtTether" Text="Phone Tether: Disconnected" Foreground="#E2E8F0" FontSize="12"/>
-                        </StackPanel>
-                    </Grid>
-                    
-                    <Grid>
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse Name="DotWifi" Width="8" Height="8" Fill="#EF4444" Margin="0,0,8,0"/>
-                            <TextBlock Name="TxtWifi" Text="Firewall Wi-Fi: Disconnected" Foreground="#E2E8F0" FontSize="12"/>
-                        </StackPanel>
-                    </Grid>
-                </StackPanel>
-            </Border>
+            <StackPanel Margin="20">
+                <!-- Title Bar -->
+                <Grid Margin="0,0,0,15">
+                    <TextBlock Text="AETHER ROUTE" Foreground="#FFFFFF" FontSize="20" FontFamily="Segoe UI Black" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="BtnFx" Content="FX: ON" Style="{StaticResource TitleBarButton}" Foreground="#E3B341" Height="25" Margin="0,0,10,0"/>
+                        <Button x:Name="BtnMin" Content="—" Style="{StaticResource TitleBarButton}" Foreground="#A0AABF" Width="30" Height="25" Margin="0,0,5,0"/>
+                        <Button x:Name="BtnX" Content="✕" Style="{StaticResource TitleBarButton}" Foreground="#FF3B30" Width="30" Height="25"/>
+                    </StackPanel>
+                </Grid>
 
-            <StackPanel Grid.Row="2" VerticalAlignment="Center">
-                <Button Name="BtnToggle" Content="ACTIVATE BYPASS" Height="46" Margin="0,0,0,10"
-                        Background="#0F172A" Foreground="#334155" FontSize="13" FontWeight="Bold"
-                        BorderThickness="0" Cursor="Hand" Style="{StaticResource CleanButton}"/>
+                <TextBlock Text="V4.0 • Zero-Jitter Engine" Foreground="#4FACFE" FontSize="12" FontFamily="Segoe UI" HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
-                <Button Name="BtnCongestion" Content="&#x26A1; Congestion Fix (Holiday Mode)" FontFamily="Segoe UI Emoji, Segoe UI" Height="34" Margin="0,0,0,6"
-                        Background="#991E293B" Foreground="#38BDF8" FontSize="11" FontWeight="SemiBold"
-                        BorderThickness="1" BorderBrush="#334155" Cursor="Hand" Style="{StaticResource CleanButton}">
-                    <Button.Resources><Style TargetType="Border"><Setter Property="CornerRadius" Value="6"/></Style></Button.Resources>
-                </Button>
-            </StackPanel>
+                <!-- Status Panel -->
+                <Border Background="#0DFFFFFF" BorderBrush="#26FFFFFF" BorderThickness="1" CornerRadius="10" Padding="15" Margin="0,0,0,15">
+                    <StackPanel>
+                        <TextBlock x:Name="WifiStatus" Text="Wi-Fi: Scanning..." Foreground="#A0AABF" FontSize="13" Margin="0,0,0,8"/>
+                        <TextBlock x:Name="UsbStatus" Text="Secondary Link: Scanning..." Foreground="#A0AABF" FontSize="13" Margin="0,0,0,8"/>
+                        <TextBlock x:Name="LockStatus" Text="Engine: IDLE" Foreground="#FF3B30" FontSize="13" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
 
-            <Border Grid.Row="3" Background="#99111620" CornerRadius="6" Padding="8">
-                <TextBlock Name="TxtStatus" Text="Awaiting connections..." FontSize="11" Foreground="#94A3B8" TextAlignment="Center" TextWrapping="Wrap"/>
-            </Border>
+                <!-- Console -->
+                <Border Background="#05000000" BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="8" Height="100" Margin="0,0,0,20">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock x:Name="ConsoleLog" Text="System initialized. Waiting for connections..." Foreground="#808B96" FontSize="12" FontFamily="Consolas" TextWrapping="Wrap" Padding="10"/>
+                    </ScrollViewer>
+                </Border>
 
-            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,10,0,0">
-                <TextBlock FontSize="11">
-                    <Hyperlink Name="LinkDonate" Foreground="#38BDF8" TextDecorations="None">☕ Support / Donate</Hyperlink>
-                    <Run Text="   •   " Foreground="#475569"/>
-                    <Hyperlink Name="LinkFeedback" Foreground="#38BDF8" TextDecorations="None">📝 Submit Feedback</Hyperlink>
-                </TextBlock>
+                <Button x:Name="BtnActivate" Content="ACTIVATE ROUTING" Style="{StaticResource GlassButton}" Height="45" Margin="0,0,0,8"/>
+                
+                <TextBlock x:Name="WarningText" Text="⚠️ Wi-Fi scanning is paused for zero-jitter. Click Exit to find new networks." Foreground="#E3B341" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,10" Opacity="0"/>
+                
+                <Button x:Name="BtnGithub" Content="⭐ Leave a Star on GitHub" Style="{StaticResource GlassButton}" Foreground="#E3B341" Height="35" Margin="0,0,0,15" BorderBrush="#33E3B341"/>
+                <Button x:Name="BtnClose" Content="Exit &amp; Restore Network" Style="{StaticResource GlassButton}" Foreground="#FF3B30" Height="35" BorderBrush="#33FF3B30"/>
             </StackPanel>
         </Grid>
     </Border>
 </Window>
-"@
+"@;
 
-$reader = (New-Object System.Xml.XmlNodeReader $xaml)
-$window = [System.Windows.Markup.XamlReader]::Load($reader)
+$reader = (New-Object System.Xml.XmlNodeReader $xaml);
+$window = [System.Windows.Markup.XamlReader]::Load($reader);
 
-$headerBar = $window.FindName("HeaderBar")
-$btnClose = $window.FindName("BtnClose")
-$btnMin = $window.FindName("BtnMin")
-$dotTether = $window.FindName("DotTether")
-$txtTether = $window.FindName("TxtTether")
-$dotWifi = $window.FindName("DotWifi")
-$txtWifi = $window.FindName("TxtWifi")
-$btnToggle = $window.FindName("BtnToggle")
-$btnCongestion = $window.FindName("BtnCongestion")
-$txtStatus = $window.FindName("TxtStatus")
-$txtPing = $window.FindName("TxtPing")
-$linkDonate = $window.FindName("LinkDonate")
-$linkFeedback = $window.FindName("LinkFeedback")
+# --- Bind Elements ---
+$WifiStatus = $window.FindName("WifiStatus");
+$UsbStatus  = $window.FindName("UsbStatus");
+$LockStatus = $window.FindName("LockStatus");
+$ConsoleLog = $window.FindName("ConsoleLog");
+$WarningText = $window.FindName("WarningText");
+$BtnActivate = $window.FindName("BtnActivate");
+$BtnGithub = $window.FindName("BtnGithub");
+$BtnClose = $window.FindName("BtnClose");
+$BtnMin = $window.FindName("BtnMin");
+$BtnX = $window.FindName("BtnX");
+$BtnFx = $window.FindName("BtnFx");
+$Dancer = $window.FindName("Dancer");
 
-$headerBar.Add_MouseLeftButtonDown({ $window.DragMove() })
-$btnMin.Add_Click({ $window.WindowState = 'Minimized' })
-$linkDonate.Add_Click({ [System.Diagnostics.Process]::Start("https://ko-fi.com/acebymistake") })
-$linkFeedback.Add_Click({ [System.Diagnostics.Process]::Start("https://forms.gle/cZ83TNnPR4y2oak86") })
+$script:isActive = $false;
+$script:isLatched = $false;
+$script:fxOn = $true;
+$script:wifiIndex = $null;
+$script:wifiName = $null;
+$script:wifiGateway = $null;
+$script:usbIndex = $null;
+$script:activeMatchIp = $null;
 
-$script:bypassActive = $false
-$script:wifiGateway = $null
-$script:activeDynamicRoutes = New-Object System.Collections.Generic.HashSet[string]
-$script:pingTool = New-Object System.Net.NetworkInformation.Ping
+# --- Robust System Tray Integration ---
+$notifyIcon = New-Object System.Windows.Forms.NotifyIcon;
+try {
+    # Dynamically extract your custom compiled .ico logo to use in the tray
+    $exePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName;
+    $notifyIcon.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($exePath);
+} catch {
+    $notifyIcon.Icon = [System.Drawing.SystemIcons]::Shield;
+}
+$notifyIcon.Text = "AetherRoute Engine";
+$notifyIcon.Visible = $false;
 
-# Reliable Hardware Detection using OS InterfaceType (71 = Wi-Fi, 6 = Ethernet/USB)
-function Get-Adapters {
-    $adapters = Get-NetAdapter | Where-Object { $_.Status -eq 'Up' }
-    $wifi = $adapters | Where-Object { $_.InterfaceType -eq 71 -or $_.PhysicalMediaType -like "*Native 802.11*" } | Select-Object -First 1
-    $tether = $adapters | Where-Object { ($_.InterfaceType -eq 6) -and ($_.ifIndex -ne $wifi.ifIndex) } | Select-Object -First 1
-    return @{ Wifi = $wifi; Tether = $tether }
+$contextMenu = New-Object System.Windows.Forms.ContextMenu;
+$menuShow = New-Object System.Windows.Forms.MenuItem("Show App");
+$menuRestore = New-Object System.Windows.Forms.MenuItem("Restore Network");
+$menuExit = New-Object System.Windows.Forms.MenuItem("Exit Completely");
+
+$contextMenu.MenuItems.Add($menuShow) | Out-Null;
+$contextMenu.MenuItems.Add($menuRestore) | Out-Null;
+$contextMenu.MenuItems.Add("-") | Out-Null;
+$contextMenu.MenuItems.Add($menuExit) | Out-Null;
+$notifyIcon.ContextMenu = $contextMenu;
+
+function Log($msg) {
+    $time = (Get-Date).ToString("HH:mm:ss");
+    $ConsoleLog.Text = "[$time] $msg`n" + $ConsoleLog.Text;
 }
 
-function Reset-RoutingState {
-    ipconfig /flushdns | Out-Null
-    foreach ($ip in $script:activeDynamicRoutes) {
-        Remove-NetRoute -DestinationPrefix "$ip/32" -Confirm:$false -ErrorAction SilentlyContinue
+function Restore-Network {
+    Log "Restoring original network state...";
+    if ($script:activeMatchIp -and$script:wifiIndex) {
+        Remove-NetRoute -DestinationPrefix "$($script:activeMatchIp)/32" -InterfaceIndex $script:wifiIndex -Confirm:$false -ErrorAction SilentlyContinue | Out-Null;
     }
-    $script:activeDynamicRoutes.Clear()
+    if ($script:wifiIndex) { Set-NetIPInterface -InterfaceIndex$script:wifiIndex -AutomaticMetric Enabled -ErrorAction SilentlyContinue | Out-Null; }
+    if ($script:usbIndex) { Set-NetIPInterface -InterfaceIndex$script:usbIndex -AutomaticMetric Enabled -ErrorAction SilentlyContinue | Out-Null; }
     
-    $net = Get-Adapters
-    if ($net.Wifi) { Set-NetIPInterface -InterfaceIndex $net.Wifi.ifIndex -AutomaticMetric Enabled -ErrorAction SilentlyContinue }
-    if ($net.Tether) { Set-NetIPInterface -InterfaceIndex $net.Tether.ifIndex -AutomaticMetric Enabled -ErrorAction SilentlyContinue }
-    arp -d * > $null 2>&1
+    if ($script:wifiName) {
+        cmd.exe /c "netsh wlan set autoconfig enabled=yes interface=`"$($script:wifiName)`"";
+    }
+    
+    $script:isActive =$false;
+    $script:isLatched =$false;
+    $BtnActivate.Content = "ACTIVATE ROUTING";
+    $BtnActivate.Foreground = "#00F2FE";
+    $WarningText.Opacity = 0;
+    $LockStatus.Text = "Engine: IDLE";
+    $LockStatus.Foreground = "#FF3B30";
+    
+    Log "Network restored successfully.";
 }
 
-$timer = New-Object System.Windows.Threading.DispatcherTimer
-$timer.Interval = [TimeSpan]::FromSeconds(2)
-$timer.Add_Tick({
-    $net = Get-Adapters
-    
-    # Telemetry & UI Updates
-    if ($net.Tether) {
-        $dotTether.Fill = [System.Windows.Media.Brushes]::LimeGreen
-        $txtTether.Text = "Phone Tether: Connected"
-        try {
-            $reply = $script:pingTool.Send("1.1.1.1", 500)
-            if ($reply.Status -eq 'Success') { $txtPing.Text = "Ping: $($reply.RoundtripTime)ms" } else { $txtPing.Text = "Ping: --" }
-        } catch { $txtPing.Text = "Ping: --" }
+# --- Event Handlers ---
+$window.Add_MouseLeftButtonDown({$window.DragMove(); });
+
+# FX Toggle (Completely hides the 8-bit character to save CPU frames)
+$BtnFx.Add_Click({
+    if ($script:fxOn) {
+        $script:fxOn =$false;
+        $BtnFx.Content = "FX: OFF";
+        $BtnFx.Foreground = "#808B96";
+        $Dancer.Visibility = "Collapsed";
     } else {
-        $dotTether.Fill = [System.Windows.Media.Brushes]::Crimson
-        $txtTether.Text = "Phone Tether: Disconnected"
-        $txtPing.Text = "Ping: --"
+        $script:fxOn =$true;
+        $BtnFx.Content = "FX: ON";
+        $BtnFx.Foreground = "#E3B341";
+        $Dancer.Visibility = "Visible";
+    }
+});
+
+# Tray Restore Actions
+$restoreAction = { 
+    $window.ShowInTaskbar =$true; 
+    $window.WindowState = 'Normal'; 
+    $notifyIcon.Visible = $false; 
+}
+$menuShow.Add_Click($restoreAction);
+$notifyIcon.Add_DoubleClick($restoreAction);
+
+$menuRestore.Add_Click({ Restore-Network; });$menuExit.Add_Click({ Restore-Network; $notifyIcon.Visible = $false; $notifyIcon.Dispose(); $window.Close(); });
+
+# Window Minimize & Close
+$BtnMin.Add_Click({ 
+    $window.ShowInTaskbar =$false; 
+    $window.WindowState = 'Minimized'; 
+    $notifyIcon.Visible = $true; 
+});
+$BtnX.Add_Click({ Restore-Network; $notifyIcon.Visible = $false; $notifyIcon.Dispose(); $window.Close(); });$BtnClose.Add_Click({ Restore-Network; $notifyIcon.Visible = $false; $notifyIcon.Dispose(); $window.Close(); });
+
+$BtnGithub.Add_Click({ Start-Process "https://github.com/Lakshay-exec/AetherRoute"; });
+
+$BtnActivate.Add_Click({
+    if ($script:isActive) { return; }$wifi = Get-NetAdapter | Where-Object { $_.InterfaceType -eq 71 -and$_.Status -eq "Up" } | Select-Object -First 1;
+    $wifiIndexToIgnore = if ($wifi) { $wifi.ifIndex } else { -1 };$usb = Get-NetAdapter | Where-Object { $_.Status -eq "Up" -and $_.ifIndex -ne $wifiIndexToIgnore -and$_.Name -notmatch "vEthernet|Bluetooth|VMware|VirtualBox|Loopback" } | Select-Object -First 1;
+
+    if (-not $wifi -or -not$usb) {
+        Log "ERROR: Both Wi-Fi and secondary connection must be active!";
+        return;
+    }
+
+    $script:wifiIndex =$wifi.ifIndex;
+    $script:wifiName =$wifi.Name;
+    $script:usbIndex =$usb.ifIndex;
+    $script:wifiGateway = (Get-NetIPConfiguration -InterfaceIndex$script:wifiIndex).IPv4DefaultGateway.NextHop;
+
+    Log "Inverting Interface Metrics...";
+    Set-NetIPInterface -InterfaceIndex $script:usbIndex -InterfaceMetric 5;
+    Set-NetIPInterface -InterfaceIndex $script:wifiIndex -InterfaceMetric 50;
+
+    Log "Disabling WLAN AutoConfig (Ping Spike Fix)...";
+    cmd.exe /c "netsh wlan set autoconfig enabled=no interface=`"$($script:wifiName)`"";
+
+    $script:isActive =$true;
+    $BtnActivate.Content = "ROUTING ACTIVE";
+    $BtnActivate.Foreground = "#00FF66";
+    $WarningText.Opacity = 1; 
+    $LockStatus.Text = "Engine: SEARCHING FOR MATCH...";
+    $LockStatus.Foreground = "#E3B341";
+    Log "Bypass initialized. Launch your game.";
+});
+
+$timerAction = {
+    if (-not $script:isActive -or$script:isLatched) { return; }
+
+    $pids = Get-Process "VALORANT-Win64-Shipping", "cs2", "eFootball" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id;
+    if ($pids) {
+        $ports = Get-NetUDPEndpoint -OwningProcess$pids -ErrorAction SilentlyContinue | Where-Object RemoteAddress -notmatch "^(127\.|0\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)";
         
-        # Unplug Protection: Auto-revert if tether drops mid-game
-        if ($script:bypassActive) {
-            Reset-RoutingState
-            $script:bypassActive = $false
-            $btnToggle.Content = "ACTIVATE BYPASS"
-            $btnToggle.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#2563EB")
-            $txtStatus.Text = "CRITICAL: Tether disconnected! Bypass aborted."
-        }
-    }
-
-    if ($net.Wifi) {
-        $dotWifi.Fill = [System.Windows.Media.Brushes]::LimeGreen
-        $txtWifi.Text = "Firewall Wi-Fi: Connected"
-    } else {
-        $dotWifi.Fill = [System.Windows.Media.Brushes]::Crimson
-        $txtWifi.Text = "Firewall Wi-Fi: Disconnected"
-    }
-
-    if (-not $script:bypassActive) {
-        if ($net.Tether -and $net.Wifi) {
-            $btnToggle.IsEnabled = $true
-            $btnToggle.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#2563EB")
-            $btnToggle.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FFFFFF")
-            if ($txtStatus.Text -notmatch "CRITICAL") { $txtStatus.Text = "Ready to engage. Both networks detected." }
-        } else {
-            $btnToggle.IsEnabled = $false
-            $btnToggle.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0F172A")
-            $btnToggle.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#334155")
-        }
-    } else {
-        # GLOBAL GAME SNIFFER (Runs only when bypass is active)
-        $pids = Get-Process "VALORANT-Win64-Shipping", "cs2", "League of Legends" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id
-        if ($pids -and $script:wifiGateway) {
-            $gamePorts = Get-NetUDPEndpoint -OwningProcess $pids -ErrorAction SilentlyContinue | Where-Object RemoteAddress -notmatch "^(127\.|0\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)"
-            foreach ($port in $gamePorts) {
-                $remoteIp = $port.RemoteAddress
-                if (-not $script:activeDynamicRoutes.Contains($remoteIp)) {
-                    New-NetRoute -DestinationPrefix "$remoteIp/32" -InterfaceIndex $net.Wifi.ifIndex -NextHop $script:wifiGateway -RouteMetric 1 -PolicyStore ActiveStore -ErrorAction SilentlyContinue | Out-Null
-                    $script:activeDynamicRoutes.Add($remoteIp)
-                    $txtStatus.Text = "Live Match Detected: Routing $remoteIp via Wi-Fi."
+        if ($ports) {$ports | ForEach-Object {
+                $remoteIp =$_.RemoteAddress;
+                if ($remoteIp -and -not$script:isLatched) {
+                    New-NetRoute -DestinationPrefix "$remoteIp/32" -InterfaceIndex $script:wifiIndex -NextHop$script:wifiGateway -RouteMetric 1 -PolicyStore ActiveStore -ErrorAction SilentlyContinue | Out-Null;
+                    $script:activeMatchIp =$remoteIp;
+                    $script:isLatched =$true;
+                    
+                    $LockStatus.Text = "Engine: LATCHED ($remoteIp)";
+                    $LockStatus.Foreground = "#00FF66";
+                    Log "Match Server Found: $remoteIp";
+                    Log "Sniffer paused. Wi-Fi stabilized for zero jitter.";
                 }
-            }
+            };
         }
     }
-})
-$timer.Start()
+};
 
-$btnToggle.Add_Click({
-    if (-not $script:bypassActive) {
-        $net = Get-Adapters
-        $script:wifiGateway = (Get-NetRoute -InterfaceIndex $net.Wifi.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object NextHop -ne "0.0.0.0").NextHop | Select-Object -First 1
+$timer = New-Object System.Windows.Threading.DispatcherTimer;
+$timer.Interval = [TimeSpan]::FromSeconds(2);$timer.Add_Tick($timerAction);$timer.Start();
 
-        if (-not $script:wifiGateway) {
-            $txtStatus.Text = "Error: Wi-Fi gateway not found. Login to portal!"
-            return
-        }
+$uiTimer = New-Object System.Windows.Threading.DispatcherTimer;
+$uiTimer.Interval = [TimeSpan]::FromSeconds(1);
+$uiTimer.Add_Tick({$w = Get-NetAdapter | Where-Object { $_.InterfaceType -eq 71 -and$_.Status -eq "Up" } | Select-Object -First 1;
+    $wifiIndexToIgnore = if ($w) { $w.ifIndex } else { -1 };$u = Get-NetAdapter | Where-Object { $_.Status -eq "Up" -and $_.ifIndex -ne $wifiIndexToIgnore -and$_.Name -notmatch "vEthernet|Bluetooth|VMware|VirtualBox|Loopback" } | Select-Object -First 1;
+    
+    $WifiStatus.Text = if ($w) { "Wi-Fi: Connected ($($w.Name))" } else { "Wi-Fi: Disconnected" };
+    $UsbStatus.Text = if ($u) { "Secondary Link: Connected ($($u.Name))" } else { "Secondary Link: Disconnected" };
+});
+$uiTimer.Start();
 
-        Set-NetIPInterface -InterfaceIndex $net.Tether.ifIndex -InterfaceMetric 5 -ErrorAction SilentlyContinue
-        Set-NetIPInterface -InterfaceIndex $net.Wifi.ifIndex -InterfaceMetric 50 -ErrorAction SilentlyContinue
-        ipconfig /flushdns | Out-Null
-
-        $script:bypassActive = $true
-        $btnToggle.Content = "DEACTIVATE BYPASS"
-        $btnToggle.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#DC2626")
-        $txtStatus.Text = "Active: Listening for Match UDP packets..."
-    } else {
-        Reset-RoutingState
-        $script:bypassActive = $false
-        $btnToggle.Content = "ACTIVATE BYPASS"
-        $btnToggle.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#2563EB")
-        $txtStatus.Text = "Bypass stopped. Default routing restored."
-    }
-})
-
-$btnClose.Add_Click({
-    if ($script:bypassActive) { Reset-RoutingState }
-    $timer.Stop()
-    $window.Close()
-})
-
-$window.ShowDialog() | Out-Null
+[void]$window.ShowDialog();
