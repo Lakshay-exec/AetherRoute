@@ -1,4 +1,4 @@
-# ⚡ AetherRoute v4.0
+# ⚡ AetherRoute v5.0
 
 [![Download Latest Release](https://img.shields.io/github/v/release/Lakshay-exec/AetherRoute?color=blue&label=Download%20Executable&style=for-the-badge)](https://github.com/Lakshay-exec/AetherRoute/releases/latest)
 
@@ -8,15 +8,15 @@ By inverting Windows TCP/IP adapter metrics, AetherRoute pushes lightweight auth
 
 ⭐ **If this utility fixes your match ping or unblocks voice chat, please leave a Star on this repository!**
 
-## 🚀 V4.0 Zero-Jitter Engine Update
-* **Zero-Jitter Engine:** Automatically suspends background Wi-Fi scanning (`WLAN AutoConfig`) during matches to completely eliminate 100ms+ roaming ping spikes.
-* **Hardware-Accelerated UI:** New Glassmorphism interface featuring an animated 8-bit mascot and an `[FX: ON/OFF]` toggle to save CPU frames on lower-end hardware.
-* **System Tray Integration:** Minimizes seamlessly into the Windows taskbar tray for zero desktop clutter.
-* **Universal Adapter Detection:** Automatically maps to any Android or iOS USB tether dynamically.
+## 🚀 V5.0 Safe Engine Update
+- **Safe Core Routing:** Removed the legacy WLAN AutoConfig suspension. The engine now strictly relies on native TCP/IP routing tables (`NetTCPIP` cmdlets) to prevent any chance of permanent Wi-Fi scanning breakage if the app is unexpectedly force-closed.
+- **Hardware-Accelerated UI:** Glassmorphism interface featuring an animated 8-bit mascot and an `[FX: ON/OFF]` toggle to save CPU frames on lower-end hardware.
+- **System Tray Integration:** Minimizes seamlessly into the Windows taskbar tray for zero desktop clutter.
+- **Universal Adapter Detection:** Automatically maps to any Android or iOS USB tether dynamically.
 
 ## 🛡️ Anti-Cheat & Network Safety
-* **Zero Memory Hooks:** Operates strictly via native Windows TCP/IP routing APIs (`NetTCPIP` cmdlets). It does not inject into game processes or create virtual TAP adapters.
-* **Fully Compliant:** 100% safe for Riot Vanguard, Valve Anti-Cheat (VAC), BattlEye, and Easy Anti-Cheat (EAC). 
+- **Zero Memory Hooks:** Operates strictly via native Windows TCP/IP routing APIs (`NetTCPIP` cmdlets). It does not inject into game processes or create virtual TAP adapters.
+- **Fully Compliant:** 100% safe for Riot Vanguard, Valve Anti-Cheat (VAC), BattlEye, and Easy Anti-Cheat (EAC). 
 
 ## ⚙️ Usage
 1. Click the **Download Executable** button above to get `AetherRoute.exe`.
