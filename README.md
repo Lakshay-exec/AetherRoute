@@ -1,6 +1,6 @@
 # ⚡ AetherRoute v5.0
 
-[![Download Latest Release](https://img.shields.io/github/v/release/Lakshay-exec/AetherRoute?color=blue&label=Download%20Executable&style=for-the-badge)](https://github.com/Lakshay-exec/AetherRoute/releases/latest)
+[![Download Latest Release]](https://github.com/Lakshay-exec/AetherRoute/releases/latest)
 
 AetherRoute is a dual-interface split-tunneling utility designed to optimize UDP packet latency and bypass strict captive-portal firewalls (Fortinet, Sophos, Cyberoam). 
 
