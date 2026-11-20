@@ -1,7 +1,10 @@
 <#
 .SYNOPSIS
-    AetherRoute V5 - Core Routing Engine (Safe Mode)
-    * Removed WLAN AutoConfig suspension to prevent permanent Wi-Fi scanning breakage.
+    AetherRoute V6.1 - Core Routing Engine (Active Watchdog Edition)
+    * Injects DSCP 46 tags to bypass UDP throttling.
+    * Suspends WLAN AutoConfig to prevent cyclic 15% packet loss spikes.
+    * Disables UDP/LSO hardware offloading to prevent bufferbloat.
+    * Implements an independent background Watchdog process to restore network instantly on crash.
 #>
 
 $ErrorActionPreference = "SilentlyContinue";
@@ -13,7 +16,7 @@ Add-Type -AssemblyName System.Drawing;
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="AetherRoute V5" Height="560" Width="420" 
+        Title="AetherRoute V6.1" Height="560" Width="420" 
         WindowStyle="None" AllowsTransparency="True" Background="Transparent" 
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
     
@@ -98,7 +101,7 @@ Add-Type -AssemblyName System.Drawing;
                     </StackPanel>
                 </Grid>
 
-                <TextBlock Text="V5.0 • Core Routing Engine" Foreground="#4FACFE" FontSize="12" FontFamily="Segoe UI" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                <TextBlock Text="V6.1 • Core Routing &amp; Active Watchdog" Foreground="#4FACFE" FontSize="12" FontFamily="Segoe UI" HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
                 <Border Background="#0DFFFFFF" BorderBrush="#26FFFFFF" BorderThickness="1" CornerRadius="10" Padding="15" Margin="0,0,0,15">
                     <StackPanel>
@@ -156,7 +159,7 @@ try {
 } catch {
     $notifyIcon.Icon = [System.Drawing.SystemIcons]::Shield;
 }
-$notifyIcon.Text = "AetherRoute V5";
+$notifyIcon.Text = "AetherRoute V6.1";
 $notifyIcon.Visible = $false;
 
 $contextMenu = New-Object System.Windows.Forms.ContextMenu;
@@ -183,8 +186,21 @@ function Restore-Network {
     if ($script:wifiIndex) { Set-NetIPInterface -InterfaceIndex $script:wifiIndex -AutomaticMetric Enabled -ErrorAction SilentlyContinue | Out-Null; }
     if ($script:usbIndex) { Set-NetIPInterface -InterfaceIndex $script:usbIndex -AutomaticMetric Enabled -ErrorAction SilentlyContinue | Out-Null; }
     
-    # Wi-Fi auto-config manipulation completely removed from restore function
+    Log "Removing VIP QoS Policies...";
+    Remove-NetQosPolicy -Name "AetherRoute_Valorant_VIP" -Confirm:$false -ErrorAction SilentlyContinue | Out-Null;
     
+    if ($script:wifiName) {
+        Log "Re-enabling Wi-Fi AutoConfig...";
+        netsh wlan set autoconfig enabled=yes interface=$script:wifiName | Out-Null;
+    }
+
+    Log "Restoring Hardware Offloads...";
+    Enable-NetAdapterChecksumOffload -Name "*" -UdpIPv4 -ErrorAction SilentlyContinue | Out-Null;
+    Enable-NetAdapterLso -Name "*" -IPv4 -ErrorAction SilentlyContinue | Out-Null;
+
+    # Remove the old V6 scheduled task if it was left behind
+    Unregister-ScheduledTask -TaskName "AetherRoute_Failsafe" -Confirm:$false -ErrorAction SilentlyContinue | Out-Null;
+
     $script:isActive = $false;
     $script:isLatched = $false;
     $BtnActivate.Content = "ACTIVATE ROUTING";
@@ -257,7 +273,31 @@ $BtnActivate.Add_Click({
     Set-NetIPInterface -InterfaceIndex $script:usbIndex -InterfaceMetric 5;
     Set-NetIPInterface -InterfaceIndex $script:wifiIndex -InterfaceMetric 50;
 
-    # Wi-Fi auto-config manipulation completely removed from activate function
+    Log "Injecting VIP QoS Policy (DSCP 46)...";
+    New-NetQosPolicy -Name "AetherRoute_Valorant_VIP" -AppPathNameMatchCondition "VALORANT-Win64-Shipping.exe" -IPProtocolMatchCondition UDP -DSCPAction 46 -ErrorAction SilentlyContinue | Out-Null;
+
+    Log "Suspending Wi-Fi Background Scanning...";
+    netsh wlan set autoconfig enabled=no interface=$script:wifiName | Out-Null;
+
+    Log "Disabling UDP Hardware Offloads...";
+    Disable-NetAdapterChecksumOffload -Name "*" -UdpIPv4 -ErrorAction SilentlyContinue | Out-Null;
+    Disable-NetAdapterLso -Name "*" -IPv4 -ErrorAction SilentlyContinue | Out-Null;
+
+    Log "Deploying Background Watchdog...";
+    $watchdogPath = "$env:TEMP\AetherWatchdog.ps1"
+    $watchdogCode = @"
+param(`$ParentPID, `$WifiName)
+while (Get-Process -Id `$ParentPID -ErrorAction SilentlyContinue) {
+    Start-Sleep -Seconds 2
+}
+netsh wlan set autoconfig enabled=yes interface="`$WifiName" | Out-Null
+Enable-NetAdapterChecksumOffload -Name "*" -UdpIPv4 -ErrorAction SilentlyContinue | Out-Null
+Enable-NetAdapterLso -Name "*" -IPv4 -ErrorAction SilentlyContinue | Out-Null
+Remove-NetQosPolicy -Name "AetherRoute_Valorant_VIP" -Confirm:`$false -ErrorAction SilentlyContinue | Out-Null
+Remove-Item `$MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
+"@
+    Set-Content -Path $watchdogPath -Value $watchdogCode
+    Start-Process powershell.exe -ArgumentList "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$watchdogPath`" -ParentPID $PID -WifiName `"$($script:wifiName)`""
 
     $script:isActive = $true;
     $BtnActivate.Content = "ROUTING ACTIVE";
@@ -308,5 +348,8 @@ $uiTimer.Add_Tick({
     $UsbStatus.Text = if ($u) { "Secondary Link: Connected ($($u.Name))" } else { "Secondary Link: Disconnected" };
 });
 $uiTimer.Start();
+
+# Auto-cleanup logic just in case previous session closed dirty without a watchdog
+Restore-Network | Out-Null; 
 
 [void]$window.ShowDialog();
